@@ -1,5 +1,3 @@
-# Main program for Apex Entities's prototype
-
 import RPi.GPIO as GPIO
 from sense_hat import SenseHat
 from time import sleep
