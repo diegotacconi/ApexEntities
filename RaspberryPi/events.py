@@ -1,3 +1,5 @@
+# Main program for Apex Entities's prototype
+
 import RPi.GPIO as GPIO
 from sense_hat import SenseHat
 from time import sleep
@@ -5,37 +7,68 @@ from time import sleep
 sense = SenseHat()
 sense.clear()
 
+def PrintTitle():
+    sense.clear()
+    sense.show_message(
+        "Apex Entities",
+        scroll_speed=0.07,
+        text_colour=[150,0,250]
+        )
+    sense.clear()
+
+def PrintCreeper(delay):
+    sense.clear()
+    g = (0, 255, 0) # Green
+    b = (0, 0, 0) # Black
+
+    creeper_pixels = [
+        g, g, g, g, g, g, g, g,
+        g, g, g, g, g, g, g, g,
+        g, b, b, g, g, b, b, g,
+        g, b, b, g, g, b, b, g,
+        g, g, g, b, b, g, g, g,
+        g, g, b, b, b, b, g, g,
+        g, g, b, b, b, b, g, g,
+        g, g, b, g, g, b, g, g
+    ]
+
+    sense.set_pixels(creeper_pixels)
+    sleep(delay)
+    sense.clear()
+
 # pinctrl set 5 ip pn
 # pinctrl set 6 ip pn
 # pinctrl set 12 ip pn
 # pinctrl -p
-# ---
-# 29: ip    pn | lo // GPIO5 = input
-# 31: ip    pn | lo // GPIO6 = input
-# 32: ip    pn | lo // GPIO12 = input
-# ---
-# 29: ip    pn | hi // GPIO5 = input
-# 31: ip    pn | hi // GPIO6 = input
-# 32: ip    pn | hi // GPIO12 = input
 
-w1name = "A"
+
+# Water Sensor 1
+w1name = "1"
 w1pin = 29
 w1state = False
 
-w2name = "B"
+# Water Sensor 2
+w2name = "2"
 w2pin = 31
 w2state = False
 
-w3name = "C"
+# Water Sensor 3
+w3name = "3"
 w3pin = 32
 w3state = False
 
+# Count number of sensors underwater
 count = 0
+
 
 def PrintSensors():
     global count
     count = int(w1state) + int(w2state) + int(w3state)
-    print('%s=%s   %s=%s   %s=%s   Count=%s'% (w1name, int(w1state), w2name, int(w2state), w3name, int(w3state), count))
+    print('%s=%s   %s=%s   %s=%s   Count=%s'% (
+        w1name, int(w1state), 
+        w2name, int(w2state), 
+        w3name, int(w3state), 
+        count))
 
 def PrintCount():
     global count
@@ -71,6 +104,9 @@ def SetSensor3(channel):
     PrintSensors()
     PrintCount()
 
+
+PrintTitle()
+
 GPIO.setmode(GPIO.BOARD)
 
 GPIO.setup(w1pin, GPIO.IN)
@@ -82,10 +118,13 @@ SetSensor1(w1pin)
 SetSensor2(w2pin)
 SetSensor3(w3pin)
 print('Ready')
+PrintCreeper(3)
 
 GPIO.add_event_detect(w1pin, GPIO.RISING, SetSensor1, bouncetime=200)
 GPIO.add_event_detect(w2pin, GPIO.RISING, SetSensor2, bouncetime=200)
 GPIO.add_event_detect(w3pin, GPIO.RISING, SetSensor3, bouncetime=200)
+
+
 
 while True:
     pass
