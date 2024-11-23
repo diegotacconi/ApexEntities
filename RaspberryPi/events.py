@@ -135,7 +135,25 @@ GPIO.add_event_detect(w1pin, GPIO.BOTH, SetSensor1, bouncetime=200)
 GPIO.add_event_detect(w2pin, GPIO.BOTH, SetSensor2, bouncetime=200)
 GPIO.add_event_detect(w3pin, GPIO.BOTH, SetSensor3, bouncetime=200)
 
+running = True
+while running:
+    for event in sense.stick.get_events():
+    
+        print('action=%s direction=%s'% (event.action, event.direction))
 
+        if event.action == 'pressed' and event.direction == 'up':
+            PrintTitle()
 
-while True:
-    pass
+        if event.action == 'pressed' and event.direction == 'down':
+            sense.clear()
+            running = False
+            break
+
+        if event.action == 'pressed' and event.direction == 'left':
+            sense.show_letter("L")
+
+        if event.action == 'pressed' and event.direction == 'right':
+            sense.show_letter("R")
+
+        if event.action == 'pressed' and event.direction == 'middle':
+            PrintCreeper(1)
