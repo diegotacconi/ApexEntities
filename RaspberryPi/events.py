@@ -131,9 +131,9 @@ SetSensor3(w3pin)
 print('Ready')
 # PrintCreeper(3)
 
-GPIO.add_event_detect(w1pin, GPIO.RISING, SetSensor1, bouncetime=200)
-GPIO.add_event_detect(w2pin, GPIO.RISING, SetSensor2, bouncetime=200)
-GPIO.add_event_detect(w3pin, GPIO.RISING, SetSensor3, bouncetime=200)
+GPIO.add_event_detect(w1pin, GPIO.BOTH, SetSensor1, bouncetime=200)
+GPIO.add_event_detect(w2pin, GPIO.BOTH, SetSensor2, bouncetime=200)
+GPIO.add_event_detect(w3pin, GPIO.BOTH, SetSensor3, bouncetime=200)
 
 
 
