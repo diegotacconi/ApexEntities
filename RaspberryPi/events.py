@@ -2,6 +2,7 @@
 
 import RPi.GPIO as GPIO
 from sense_hat import SenseHat
+from enum import Enum
 from time import sleep
 
 sense = SenseHat()
@@ -41,33 +42,43 @@ def PrintCreeper(delay):
 # pinctrl set 12 ip pn
 # pinctrl -p
 
+class State(Enum):
+    Water = True
+    Air = False
 
 # Water Sensor 1
 w1name = "1"
 w1pin = 29
-w1state = True
+w1state = State.Water
 
 # Water Sensor 2
 w2name = "2"
 w2pin = 31
-w2state = True
+w2state = State.Water
 
 # Water Sensor 3
 w3name = "3"
 w3pin = 32
-w3state = True
+w3state = State.Water
 
 # Count number of sensors underwater
 count = 0
 
+def StateToSting(state):
+    str = ""
+    if state == State.Water:
+        str = "Water"
+    else:
+        str = "Air  "
+    return str
 
 def PrintSensors():
     global count
-    count = int(w1state) + int(w2state) + int(w3state)
+    count = int(w1state.value) + int(w2state.value) + int(w3state.value)
     print('%s=%s   %s=%s   %s=%s   Count=%s'% (
-        w1name, int(w1state), 
-        w2name, int(w2state), 
-        w3name, int(w3state), 
+        w1name, StateToSting(w1state), 
+        w2name, StateToSting(w2state), 
+        w3name, StateToSting(w3state), 
         count))
 
 def PrintCount():
@@ -80,27 +91,27 @@ def PrintCount():
 def SetSensor1(channel):
     global w1state
     if GPIO.input(channel):
-        w1state = False
+        w1state = State.Air
     else:
-        w1state = True
+        w1state = State.Water
     PrintSensors()
     PrintCount()
 
 def SetSensor2(channel):
     global w2state
     if GPIO.input(channel):
-        w2state = False
+        w2state = State.Air
     else:
-        w2state = True
+        w2state = State.Water
     PrintSensors()
     PrintCount()
 
 def SetSensor3(channel):
     global w3state
     if GPIO.input(channel):
-        w3state = False
+        w3state = State.Air
     else:
-        w3state = True
+        w3state = State.Water
     PrintSensors()
     PrintCount()
 
@@ -126,5 +137,5 @@ GPIO.add_event_detect(w3pin, GPIO.RISING, SetSensor3, bouncetime=200)
 
 
 
-#while True:
-#    pass
+while True:
+    pass
