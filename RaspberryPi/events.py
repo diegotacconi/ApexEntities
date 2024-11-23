@@ -45,17 +45,17 @@ def PrintCreeper(delay):
 # Water Sensor 1
 w1name = "1"
 w1pin = 29
-w1state = False
+w1state = True
 
 # Water Sensor 2
 w2name = "2"
 w2pin = 31
-w2state = False
+w2state = True
 
 # Water Sensor 3
 w3name = "3"
 w3pin = 32
-w3state = False
+w3state = True
 
 # Count number of sensors underwater
 count = 0
@@ -80,32 +80,32 @@ def PrintCount():
 def SetSensor1(channel):
     global w1state
     if GPIO.input(channel):
-        w1state = True
-    else:
         w1state = False
+    else:
+        w1state = True
     PrintSensors()
     PrintCount()
 
 def SetSensor2(channel):
     global w2state
     if GPIO.input(channel):
-        w2state = True
-    else:
         w2state = False
+    else:
+        w2state = True
     PrintSensors()
     PrintCount()
 
 def SetSensor3(channel):
     global w3state
     if GPIO.input(channel):
-        w3state = True
-    else:
         w3state = False
+    else:
+        w3state = True
     PrintSensors()
     PrintCount()
 
 
-PrintTitle()
+# PrintTitle()
 
 GPIO.setmode(GPIO.BOARD)
 
@@ -118,7 +118,7 @@ SetSensor1(w1pin)
 SetSensor2(w2pin)
 SetSensor3(w3pin)
 print('Ready')
-PrintCreeper(3)
+# PrintCreeper(3)
 
 GPIO.add_event_detect(w1pin, GPIO.RISING, SetSensor1, bouncetime=200)
 GPIO.add_event_detect(w2pin, GPIO.RISING, SetSensor2, bouncetime=200)
@@ -126,5 +126,5 @@ GPIO.add_event_detect(w3pin, GPIO.RISING, SetSensor3, bouncetime=200)
 
 
 
-while True:
-    pass
+#while True:
+#    pass
