@@ -17,11 +17,47 @@ def PrintTitle():
         )
     sense.clear()
 
+def PrintReady(delay):
+    sense.clear()
+    o = (0, 0, 0)
+    x = (0, 64, 0)
+    X = (0, 255, 0)
+    ready_pixels = [
+        o, x, x, x, x, x, x, o,
+        x, o, o, o, o, o, o, x,
+        x, o, o, X, o, X, o, x,
+        x, o, o, o, o, o, o, x,
+        x, o, X, o, o, o, X, x,
+        x, o, o, X, X, X, o, x,
+        x, o, o, o, o, o, o, x,
+        o, x, x, x, x, x, x, o
+    ]
+    sense.set_pixels(ready_pixels)
+    sleep(delay)
+    sense.clear()
+
+def PrintExit(delay):
+    sense.clear()
+    o = (0, 0, 0)
+    X = (128, 0, 0)
+    ready_pixels = [
+        o, o, o, o, o, o, o, o,
+        o, o, o, o, o, o, o, o,
+        o, o, X, o, o, o, X, o,
+        o, o, o, X, o, X, o, o,
+        o, o, o, o, X, o, o, o,
+        o, o, o, X, o, X, o, o,
+        o, o, X, o, o, o, X, o,
+        o, o, o, o, o, o, o, o
+    ]
+    sense.set_pixels(ready_pixels)
+    sleep(delay)
+    sense.clear()
+
 def PrintCreeper(delay):
     sense.clear()
     g = (0, 255, 0) # Green
     b = (0, 0, 0) # Black
-
     creeper_pixels = [
         g, g, g, g, g, g, g, g,
         g, g, g, g, g, g, g, g,
@@ -32,7 +68,6 @@ def PrintCreeper(delay):
         g, g, b, b, b, b, g, g,
         g, g, b, g, g, b, g, g
     ]
-
     sense.set_pixels(creeper_pixels)
     sleep(delay)
     sense.clear()
@@ -128,32 +163,36 @@ GPIO.setup(w3pin, GPIO.IN)
 SetSensor1(w1pin)
 SetSensor2(w2pin)
 SetSensor3(w3pin)
-print('Ready')
-# PrintCreeper(3)
 
 GPIO.add_event_detect(w1pin, GPIO.BOTH, SetSensor1, bouncetime=200)
 GPIO.add_event_detect(w2pin, GPIO.BOTH, SetSensor2, bouncetime=200)
 GPIO.add_event_detect(w3pin, GPIO.BOTH, SetSensor3, bouncetime=200)
 
+print('Ready')
+PrintReady(1)
+
 running = True
 while running:
-    for event in sense.stick.get_events():
+    for e in sense.stick.get_events():
     
-        print('action=%s direction=%s'% (event.action, event.direction))
+        print('action=%s direction=%s'% (e.action, e.direction))
 
-        if event.action == 'pressed' and event.direction == 'up':
-            PrintTitle()
+        if e.action == 'pressed' and e.direction == 'up':
+            PrintReady(1)
 
-        if event.action == 'pressed' and event.direction == 'down':
+        if e.action == 'pressed' and e.direction == 'down':
+            PrintExit(1)
+            print('Exit')
             sense.clear()
             running = False
             break
 
-        if event.action == 'pressed' and event.direction == 'left':
-            sense.show_letter("L")
+        if e.action == 'pressed' and e.direction == 'left':
+            PrintTitle()
 
-        if event.action == 'pressed' and event.direction == 'right':
-            sense.show_letter("R")
-
-        if event.action == 'pressed' and event.direction == 'middle':
+        if e.action == 'pressed' and e.direction == 'right':
             PrintCreeper(1)
+
+        if e.action == 'pressed' and e.direction == 'middle':
+            PrintSensors()
+            PrintCount()
