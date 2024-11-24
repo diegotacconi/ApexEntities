@@ -1,0 +1,16 @@
+{
+    "UnderWaterAlarm":true,
+    "UnderWaterSensorsCount": 2,
+    "WaterSensor1": true,
+    "WaterSensor2": false,
+    "WaterSensor3": true,
+    "TemperatureC": 29.3,
+    "Humidity": 1.1,
+    "Pressure": 2.2,
+    "Gps": {
+        "Lock": true,
+        "Latitude": 38.8951,
+        "Longitude": -77.0364,
+        "Height": 123.45
+    }
+}
