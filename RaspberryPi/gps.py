@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Remember to install 'pip3 install gpsd-py3'
-# Further information at https://github.com/MartijnBraam/gpsd-py3
+# Further information at https://github.com/MartijnBraam/gpsd-py3/blob/master/DOCS.md
 
 import gpsd
 

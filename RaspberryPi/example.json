@@ -8,6 +8,7 @@
     "OrientationPitch": 0,
     "OrientationRoll": 0,
     "OrientationYaw": 0,
+    "GpsStatus": 3,
     "GpsLatitude": 38.762393333,
     "GpsLongitude": -94.665196667,
     "GpsAltitude": 322.9
