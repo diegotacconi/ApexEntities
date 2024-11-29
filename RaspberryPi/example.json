@@ -1,16 +1,14 @@
 {
-    "UnderWaterAlarm":true,
-    "UnderWaterSensorsCount": 2,
     "WaterSensor1": true,
     "WaterSensor2": false,
     "WaterSensor3": true,
-    "TemperatureC": 29.3,
-    "Humidity": 1.1,
-    "Pressure": 2.2,
-    "Gps": {
-        "Lock": true,
-        "Latitude": 38.8951,
-        "Longitude": -77.0364,
-        "Height": 123.45
-    }
+    "Temperature": 29.3,
+    "Humidity": 70.0,
+    "Pressure": 1013.25,
+    "OrientationPitch": 0,
+    "OrientationRoll": 0,
+    "OrientationYaw": 0,
+    "GpsLatitude": 38.762305,
+    "GpsLongitude": -94.665118,
+    "GpsAltitude": 359.6
 }
