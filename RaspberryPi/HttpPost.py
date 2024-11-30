@@ -1,6 +1,6 @@
 import json
+import requests
  
-# Data to be written
 data = {
     "WaterSensor1": True,
     "WaterSensor2": False,
@@ -16,13 +16,12 @@ data = {
     "GpsLongitude": -94.665196667, # GPS Longitude in decimal degrees. Available when GpsStatus >= 2. Possible Values: -180.0 to 180.0
     "GpsAltitude": 322.9           # GPS Altitude in meters. Available when GpsStatus >= 3
 }
- 
-# Serializing json
-dataJson = json.dumps(data, indent=4)
- 
-# Writing to json file
-with open("RaspberryPi/example.json", "w") as outfile:
-    outfile.write(dataJson)
 
-# print(dataJson)
+url = "http://rhymescapes.net/fll_report_data/1"
+response = requests.post(url, data=data, timeout=5)
 
+# Check response status code
+if response.status_code == 200:
+    print(response.text)
+else:
+    print(f"Error: {response.status_code}")
