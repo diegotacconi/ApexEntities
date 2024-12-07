@@ -87,6 +87,16 @@ GPIO.add_event_detect(w2pin, GPIO.BOTH, SetSensor2, bouncetime=200)
 GPIO.add_event_detect(w3pin, GPIO.BOTH, SetSensor3, bouncetime=200)
 
 
+def pushed_down(event):
+    global running
+    if event.action == ACTION_PRESSED:
+        print('Exit (Joystick pushed down event)')
+        running = False
+
+
+sense.stick.direction_down = pushed_down
+
+
 def UpdateData():
     global data
     data['WaterSensor1'] = w1state.value
@@ -121,16 +131,6 @@ def PostData():
         print(f"Error: {response.status_code}")
     endTime = time.time()
     print(f"PostData: {endTime - startTime} s")
-
-
-def pushed_down(event):
-    global running
-    if event.action == ACTION_PRESSED:
-        print('Exit (Joystick pushed down event)')
-        running = False
-
-
-sense.stick.direction_down = pushed_down
 
 
 running = True
