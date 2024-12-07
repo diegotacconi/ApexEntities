@@ -1,12 +1,32 @@
 # Main program for Apex Entities's prototype
 
+import json
+import requests
 import time
 import RPi.GPIO as GPIO
-from sense_hat import SenseHat, ACTION_RELEASED
+from sense_hat import SenseHat, ACTION_PRESSED
 from enum import Enum
 
 sense = SenseHat()
 sense.clear()
+
+
+data = {
+    "WaterSensor1": True,
+    "WaterSensor2": False,
+    "WaterSensor3": True,
+    "Temperature": 0,              # Temperature in degrees Celsius
+    "Humidity": 0,                 # Relative humidity (RH) in percentage (%)
+    "Pressure": 0,                 # Pressure in Millibars
+    "OrientationPitch": 0,
+    "OrientationRoll": 0,
+    "OrientationYaw": 0,
+    "GpsStatus": 3,                # 0=no gps, 1=no fix, 2=2D fix, 3=3D fix
+    "GpsLatitude": 38.762393333,   # GPS Latitude in decimal degrees. Available when GpsStatus >= 2. Possible Values: -90.0 to 90.0
+    "GpsLongitude": -94.665196667, # GPS Longitude in decimal degrees. Available when GpsStatus >= 2. Possible Values: -180.0 to 180.0
+    "GpsAltitude": 322.9           # GPS Altitude in meters. Available when GpsStatus >= 3
+}
+
 
 def PrintTitle():
     sense.clear()
@@ -16,6 +36,7 @@ def PrintTitle():
         text_colour=[150,0,250]
         )
     sense.clear()
+
 
 def PrintReady(delay):
     sense.clear()
@@ -36,6 +57,7 @@ def PrintReady(delay):
     time.sleep(delay)
     sense.clear()
 
+
 def PrintExit(delay):
     sense.clear()
     o = (0, 0, 0)
@@ -54,6 +76,7 @@ def PrintExit(delay):
     time.sleep(delay)
     sense.clear()
 
+
 def PrintCreeper(delay):
     sense.clear()
     g = (0, 255, 0) # Green
@@ -71,6 +94,7 @@ def PrintCreeper(delay):
     sense.set_pixels(creeper_pixels)
     time.sleep(delay)
     sense.clear()
+
 
 # pinctrl set 5 ip pn
 # pinctrl set 6 ip pn
@@ -99,6 +123,7 @@ w3state = State.Water
 # Count number of sensors underwater
 count = 0
 
+
 def StateToSting(state):
     str = ""
     if state == State.Water:
@@ -106,6 +131,7 @@ def StateToSting(state):
     else:
         str = "Air  "
     return str
+
 
 def PrintSensors():
     global count
@@ -116,12 +142,14 @@ def PrintSensors():
         w3name, StateToSting(w3state), 
         count))
 
+
 def PrintCount():
     global count
     if count > 0:
         sense.show_letter(str(count))
     else:
         sense.clear()
+
 
 def SetSensor1(channel):
     global w1state
@@ -132,6 +160,7 @@ def SetSensor1(channel):
     PrintSensors()
     PrintCount()
 
+
 def SetSensor2(channel):
     global w2state
     if GPIO.input(channel):
@@ -140,6 +169,7 @@ def SetSensor2(channel):
         w2state = State.Water
     PrintSensors()
     PrintCount()
+
 
 def SetSensor3(channel):
     global w3state
@@ -150,8 +180,6 @@ def SetSensor3(channel):
     PrintSensors()
     PrintCount()
 
-
-# PrintTitle()
 
 # Setup GPIO pins
 GPIO.setmode(GPIO.BOARD)
@@ -169,31 +197,52 @@ GPIO.add_event_detect(w1pin, GPIO.BOTH, SetSensor1, bouncetime=200)
 GPIO.add_event_detect(w2pin, GPIO.BOTH, SetSensor2, bouncetime=200)
 GPIO.add_event_detect(w3pin, GPIO.BOTH, SetSensor3, bouncetime=200)
 
+
+def pushed_up(event):
+    if event.action == ACTION_PRESSED:
+        print('action=%s direction=%s'% (event.action, event.direction))
+        PrintReady(1)
+
+def pushed_down(event):
+    global running
+    if event.action == ACTION_PRESSED:
+        print('action=%s direction=%s'% (event.action, event.direction))
+        PrintExit(1)
+        print('Exit')
+        sense.clear()
+        running = False
+
+def pushed_left(event):
+    if event.action == ACTION_PRESSED:
+        print('action=%s direction=%s'% (event.action, event.direction))
+        PrintTitle()
+
+def pushed_right(event):
+    if event.action == ACTION_PRESSED:
+        print('action=%s direction=%s'% (event.action, event.direction))
+        PrintCreeper(1)
+
+def pushed_middle(event):
+    if event.action == ACTION_PRESSED:
+        print('action=%s direction=%s'% (event.action, event.direction))
+        PrintSensors()
+        PrintCount()
+
+
+sense.stick.direction_up = pushed_up
+sense.stick.direction_down = pushed_down
+sense.stick.direction_left = pushed_left
+sense.stick.direction_right = pushed_right
+sense.stick.direction_middle = pushed_middle
+
+
 print('Ready')
-PrintReady(1)
+PrintReady(2)
 
 running = True
 while running:
-    for e in sense.stick.get_events():
-    
-        print('action=%s direction=%s'% (e.action, e.direction))
-
-        if e.action == 'pressed' and e.direction == 'up':
-            PrintReady(1)
-
-        if e.action == 'pressed' and e.direction == 'down':
-            PrintExit(1)
-            print('Exit')
-            sense.clear()
-            running = False
-            break
-
-        if e.action == 'pressed' and e.direction == 'left':
-            PrintTitle()
-
-        if e.action == 'pressed' and e.direction == 'right':
-            PrintCreeper(1)
-
-        if e.action == 'pressed' and e.direction == 'middle':
-            PrintSensors()
-            PrintCount()
+    print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    # UpdateData()
+    # PrintData()
+    # PostData()
+    time.sleep(1)
