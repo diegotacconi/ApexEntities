@@ -271,7 +271,7 @@ PrintReady(2)
 
 running = True
 while running:
-    print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    # print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
     UpdateData()
     PrintData()
     # PostData()
