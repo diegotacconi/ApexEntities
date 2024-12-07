@@ -26,17 +26,83 @@ data = {
 }
 
 
-def UpdateSensorsData():
-    startTime = time.time()
+class State(Enum):
+    Water = True
+    Air = False
+
+# Water Sensor 1
+w1name = "1"
+w1pin = 29
+w1state = State.Water
+
+# Water Sensor 2
+w2name = "2"
+w2pin = 31
+w2state = State.Water
+
+# Water Sensor 3
+w3name = "3"
+w3pin = 32
+w3state = State.Water
+
+
+def SetSensor1(channel):
+    global w1state
+    if GPIO.input(channel):
+        w1state = State.Air
+    else:
+        w1state = State.Water
+
+
+def SetSensor2(channel):
+    global w2state
+    if GPIO.input(channel):
+        w2state = State.Air
+    else:
+        w2state = State.Water
+
+
+def SetSensor3(channel):
+    global w3state
+    if GPIO.input(channel):
+        w3state = State.Air
+    else:
+        w3state = State.Water
+
+
+# Setup GPIO pins
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(w1pin, GPIO.IN)
+GPIO.setup(w2pin, GPIO.IN)
+GPIO.setup(w3pin, GPIO.IN)
+
+# Set initial states
+SetSensor1(w1pin)
+SetSensor2(w2pin)
+SetSensor3(w3pin)
+
+# Detect GPIO events
+GPIO.add_event_detect(w1pin, GPIO.BOTH, SetSensor1, bouncetime=200)
+GPIO.add_event_detect(w2pin, GPIO.BOTH, SetSensor2, bouncetime=200)
+GPIO.add_event_detect(w3pin, GPIO.BOTH, SetSensor3, bouncetime=200)
+
+
+def UpdateData():
     global data
-    temperature = sense.get_temperature()
-    humidity = sense.get_humidity()
-    pressure = sense.get_pressure()
-    data['Temperature'] = round(temperature, 2)
-    data['Humidity'] = round(humidity, 2)
-    data['Pressure'] = round(pressure, 2)
+    data['WaterSensor1'] = w1state.value
+    data['WaterSensor2'] = w2state.value
+    data['WaterSensor3'] = w3state.value
+    data['Temperature'] = round(sense.get_temperature(), 2)
+    data['Humidity'] = round(sense.get_humidity(), 2)
+    data['Pressure'] = round(sense.get_pressure(), 2)
+
+
+def UpdateGps():
+    global data
+    startTime = time.time()
+    # ToDo: Add calls to GPS library
     endTime = time.time()
-    print(f"UpdateSensorsData: {endTime - startTime} s")
+    print(f"UpdateGps: {endTime - startTime} s")
 
 
 def PrintData():
@@ -70,7 +136,7 @@ sense.stick.direction_down = pushed_down
 running = True
 while running:
     print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-    UpdateSensorsData()
+    UpdateData()
     PrintData()
-    PostData()
-    time.sleep(5)
+    # PostData()
+    time.sleep(1)
