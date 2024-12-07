@@ -236,13 +236,42 @@ sense.stick.direction_right = pushed_right
 sense.stick.direction_middle = pushed_middle
 
 
+def UpdateData():
+    global data
+    data['WaterSensor1'] = w1state.value
+    data['WaterSensor2'] = w2state.value
+    data['WaterSensor3'] = w3state.value
+    data['Temperature'] = round(sense.get_temperature(), 2)
+    data['Humidity'] = round(sense.get_humidity(), 2)
+    data['Pressure'] = round(sense.get_pressure(), 2)
+
+
+def PrintData():
+    global data
+    print(json.dumps(data, indent=3))
+
+
+def PostData():
+    startTime = time.time()
+    global data
+    url = "http://rhymescapes.net/fll_report_data/1"
+    response = requests.post(url, data=data, timeout=5)
+    if response.status_code == 200:
+        print(response.text)
+    else:
+        print(f"Error: {response.status_code}")
+    endTime = time.time()
+    print(f"PostData: {endTime - startTime} s")
+
+
 print('Ready')
 PrintReady(2)
+
 
 running = True
 while running:
     print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-    # UpdateData()
-    # PrintData()
+    UpdateData()
+    PrintData()
     # PostData()
     time.sleep(1)
