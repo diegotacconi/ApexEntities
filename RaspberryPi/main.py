@@ -136,7 +136,7 @@ def StateToSting(state):
 def PrintSensors():
     global count
     count = int(w1state.value) + int(w2state.value) + int(w3state.value)
-    print('%s=%s   %s=%s   %s=%s   Count=%s'% (
+    print('Event:  %s=%s  %s=%s  %s=%s  Count=%s'% (
         w1name, StateToSting(w1state), 
         w2name, StateToSting(w2state), 
         w3name, StateToSting(w3state), 
@@ -200,35 +200,36 @@ GPIO.add_event_detect(w3pin, GPIO.BOTH, SetSensor3, bouncetime=200)
 
 def pushed_up(event):
     if event.action == ACTION_PRESSED:
-        print('action=%s direction=%s'% (event.action, event.direction))
+        print('Joystick: %s-%s event'% (event.action, event.direction))
         PrintReady(1)
 
 def pushed_down(event):
     global running
     if event.action == ACTION_PRESSED:
-        print('action=%s direction=%s'% (event.action, event.direction))
-        PrintExit(1)
+        print('Joystick: %s-%s event'% (event.action, event.direction))
         print('Exit')
+        PrintExit(1)
         sense.clear()
         running = False
 
 def pushed_left(event):
     if event.action == ACTION_PRESSED:
-        print('action=%s direction=%s'% (event.action, event.direction))
+        print('Joystick: %s-%s event'% (event.action, event.direction))
         PrintTitle()
 
 def pushed_right(event):
     if event.action == ACTION_PRESSED:
-        print('action=%s direction=%s'% (event.action, event.direction))
+        print('Joystick: %s-%s event'% (event.action, event.direction))
         PrintCreeper(1)
 
 def pushed_middle(event):
     if event.action == ACTION_PRESSED:
-        print('action=%s direction=%s'% (event.action, event.direction))
+        print('Joystick: %s-%s event'% (event.action, event.direction))
         PrintSensors()
         PrintCount()
 
 
+# Detect Joystick events
 sense.stick.direction_up = pushed_up
 sense.stick.direction_down = pushed_down
 sense.stick.direction_left = pushed_left
