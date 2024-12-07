@@ -1,9 +1,9 @@
 # Main program for Apex Entities's prototype
 
+import time
 import RPi.GPIO as GPIO
-from sense_hat import SenseHat
+from sense_hat import SenseHat, ACTION_RELEASED
 from enum import Enum
-from time import sleep
 
 sense = SenseHat()
 sense.clear()
@@ -33,7 +33,7 @@ def PrintReady(delay):
         o, x, x, x, x, x, x, o
     ]
     sense.set_pixels(ready_pixels)
-    sleep(delay)
+    time.sleep(delay)
     sense.clear()
 
 def PrintExit(delay):
@@ -51,7 +51,7 @@ def PrintExit(delay):
         o, o, o, o, o, o, o, o
     ]
     sense.set_pixels(ready_pixels)
-    sleep(delay)
+    time.sleep(delay)
     sense.clear()
 
 def PrintCreeper(delay):
@@ -69,7 +69,7 @@ def PrintCreeper(delay):
         g, g, b, g, g, b, g, g
     ]
     sense.set_pixels(creeper_pixels)
-    sleep(delay)
+    time.sleep(delay)
     sense.clear()
 
 # pinctrl set 5 ip pn
@@ -153,8 +153,8 @@ def SetSensor3(channel):
 
 # PrintTitle()
 
+# Setup GPIO pins
 GPIO.setmode(GPIO.BOARD)
-
 GPIO.setup(w1pin, GPIO.IN)
 GPIO.setup(w2pin, GPIO.IN)
 GPIO.setup(w3pin, GPIO.IN)
@@ -164,6 +164,7 @@ SetSensor1(w1pin)
 SetSensor2(w2pin)
 SetSensor3(w3pin)
 
+# Detect GPIO events
 GPIO.add_event_detect(w1pin, GPIO.BOTH, SetSensor1, bouncetime=200)
 GPIO.add_event_detect(w2pin, GPIO.BOTH, SetSensor2, bouncetime=200)
 GPIO.add_event_detect(w3pin, GPIO.BOTH, SetSensor3, bouncetime=200)
