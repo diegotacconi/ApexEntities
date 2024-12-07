@@ -90,7 +90,7 @@ GPIO.add_event_detect(w3pin, GPIO.BOTH, SetSensor3, bouncetime=200)
 def pushed_down(event):
     global running
     if event.action == ACTION_PRESSED:
-        print('Exit (Joystick pushed down event)')
+        print('Exit (Joystick %s-%s event)'% (event.action, event.direction))
         running = False
 
 
