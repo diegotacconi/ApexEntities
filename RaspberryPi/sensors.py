@@ -2,7 +2,7 @@ import json
 import requests
 import time
 import RPi.GPIO as GPIO
-from sense_hat import SenseHat, ACTION_RELEASED
+from sense_hat import SenseHat, ACTION_PRESSED
 from enum import Enum
 
 sense = SenseHat()
@@ -125,7 +125,7 @@ def PostData():
 
 def pushed_down(event):
     global running
-    if event.action != ACTION_RELEASED:
+    if event.action == ACTION_PRESSED:
         print('Exit (Joystick pushed down event)')
         running = False
 
