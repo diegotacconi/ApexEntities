@@ -6,7 +6,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
     format='%(asctime)s.%(msecs)03d | %(levelname)-8s | %(message)s',
     handlers=[
-        logging.FileHandler("/var/tmp/apexlog", mode='w'),
+        logging.FileHandler("/var/tmp/apex.log", mode='w'),
         logging.StreamHandler()
     ]
 )
