@@ -35,7 +35,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
     format='%(asctime)s.%(msecs)03d | %(levelname)-8s | %(message)s',
     handlers=[
-        logging.FileHandler("/var/tmp/apex.log", mode='w'),
+        #logging.FileHandler("/var/tmp/apex.log", mode='w'),
         logging.StreamHandler()
     ]
 )
@@ -43,7 +43,7 @@ logging.basicConfig(
 
 def PrintScrollingMessage(msg):
     sense.clear()
-    sense.show_message(msg, scroll_speed=0.05)
+    sense.show_message(msg, scroll_speed=0.03)
     sense.clear()
 
 
@@ -51,7 +51,7 @@ def PrintTitle():
     sense.clear()
     sense.show_message(
         "Apex Entities",
-        scroll_speed=0.07,
+        scroll_speed=0.05,
         text_colour=[150,0,250]
         )
     sense.clear()
