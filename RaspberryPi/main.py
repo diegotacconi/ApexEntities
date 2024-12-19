@@ -47,16 +47,6 @@ def PrintScrollingMessage(msg):
     sense.clear()
 
 
-def PrintTitle():
-    sense.clear()
-    sense.show_message(
-        "Apex Entities",
-        scroll_speed=0.05,
-        text_colour=[150,0,250]
-        )
-    sense.clear()
-
-
 def PrintExit(delay):
     sense.clear()
     o = (0, 0, 0)
@@ -229,7 +219,7 @@ def pushed_down(event):
 def pushed_left(event):
     if event.action == ACTION_PRESSED:
         logging.info('Joystick: %s-%s event'% (event.action, event.direction))
-        PrintTitle()
+        PrintServerStatus()
 
 def pushed_right(event):
     if event.action == ACTION_PRESSED:
@@ -275,6 +265,14 @@ def PostData():
         logging.info(response.text)
     else:
         logging.error(f"Error: {response.status_code}")
+    return response
+
+
+def PrintServerStatus():
+    response = PostData()
+    msg = f"Server: {response.status_code}"
+    logging.info(msg)
+    PrintScrollingMessage(msg)
 
 
 logging.info('Ready')
