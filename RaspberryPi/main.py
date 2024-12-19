@@ -258,19 +258,22 @@ def PrintData():
 
 
 def PostData():
-    global data
-    url = "http://rhymescapes.net/fll_report_data/1"
-    response = requests.post(url, data=data, timeout=5)
-    if response.status_code == 200:
-        logging.info(response.text)
-    else:
-        logging.error(f"Error: {response.status_code}")
-    return response
+    try:
+        global data
+        url = "http://rhymescapes.net/fll_report_data/1"
+        response = requests.post(url, data=data, timeout=5)
+        if response.status_code == 200:
+            logging.info(response.text)
+        else:
+            logging.error(f"Error: {response.status_code}")
+        return response.status_code
+    except:
+        return -1
 
 
 def PrintServerStatus():
-    response = PostData()
-    msg = f"Server: {response.status_code}"
+    statusCode = PostData()
+    msg = f"Server: {statusCode}"
     logging.info(msg)
     PrintScrollingMessage(msg)
 
