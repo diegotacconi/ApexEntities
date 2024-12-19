@@ -1,7 +1,9 @@
 # Main program for Apex Entities's prototype
 
 import json
+import logging
 import requests
+import subprocess
 import time
 import RPi.GPIO as GPIO
 from sense_hat import SenseHat, ACTION_PRESSED
@@ -22,10 +24,27 @@ data = {
     "OrientationRoll": 0,
     "OrientationYaw": 0,
     "GpsStatus": 3,                # 0=no gps, 1=no fix, 2=2D fix, 3=3D fix
-    "GpsLatitude": 32.89823,   # GPS Latitude in decimal degrees. Available when GpsStatus >= 2. Possible Values: -90.0 to 90.0
-    "GpsLongitude": -97.1115, # GPS Longitude in decimal degrees. Available when GpsStatus >= 2. Possible Values: -180.0 to 180.0
+    "GpsLatitude": 32.89823,       # GPS Latitude in decimal degrees. Available when GpsStatus >= 2. Possible Values: -90.0 to 90.0
+    "GpsLongitude": -97.1115,      # GPS Longitude in decimal degrees. Available when GpsStatus >= 2. Possible Values: -180.0 to 180.0
     "GpsAltitude": 322.9           # GPS Altitude in meters. Available when GpsStatus >= 3
 }
+
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    datefmt='%Y-%m-%d %H:%M:%S',
+    format='%(asctime)s.%(msecs)03d | %(levelname)-8s | %(message)s',
+    handlers=[
+        logging.FileHandler("/var/tmp/apex.log", mode='w'),
+        logging.StreamHandler()
+    ]
+)
+
+
+def PrintScrollingMessage(msg):
+    sense.clear()
+    sense.show_message(msg, scroll_speed=0.05)
+    sense.clear()
 
 
 def PrintTitle():
@@ -35,26 +54,6 @@ def PrintTitle():
         scroll_speed=0.07,
         text_colour=[150,0,250]
         )
-    sense.clear()
-
-
-def PrintReady(delay):
-    sense.clear()
-    o = (0, 0, 0)
-    x = (0, 64, 0)
-    X = (0, 255, 0)
-    ready_pixels = [
-        o, x, x, x, x, x, x, o,
-        x, o, o, o, o, o, o, x,
-        x, o, o, X, o, X, o, x,
-        x, o, o, o, o, o, o, x,
-        x, o, X, o, o, o, X, x,
-        x, o, o, X, X, X, o, x,
-        x, o, o, o, o, o, o, x,
-        o, x, x, x, x, x, x, o
-    ]
-    sense.set_pixels(ready_pixels)
-    time.sleep(delay)
     sense.clear()
 
 
@@ -77,23 +76,38 @@ def PrintExit(delay):
     sense.clear()
 
 
-def PrintCreeper(delay):
-    sense.clear()
-    g = (0, 255, 0) # Green
-    b = (0, 0, 0) # Black
-    creeper_pixels = [
-        g, g, g, g, g, g, g, g,
-        g, g, g, g, g, g, g, g,
-        g, b, b, g, g, b, b, g,
-        g, b, b, g, g, b, b, g,
-        g, g, g, b, b, g, g, g,
-        g, g, b, b, b, b, g, g,
-        g, g, b, b, b, b, g, g,
-        g, g, b, g, g, b, g, g
-    ]
-    sense.set_pixels(creeper_pixels)
-    time.sleep(delay)
-    sense.clear()
+def GetWifiStatus():
+    try:
+        output = subprocess.check_output(['iwconfig', 'wlan0'], stderr=subprocess.STDOUT)
+        output = output.decode('utf-8')
+
+        if "ESSID" in output:
+            ssid_line = [line for line in output.split('\n') if "ESSID" in line][0]
+            ssid = ssid_line.split(":")[1].strip().replace('"', '')
+            return ssid
+        else:
+            return "Not connected"
+
+    except subprocess.CalledProcessError:
+        return "Error"
+
+
+def PrintWifiStatus():
+    wifiStatus = GetWifiStatus()
+    msg = f"WiFi: {wifiStatus}"
+    logging.info(msg)
+    PrintScrollingMessage(msg)
+
+
+def GetGpsStatus():
+    return 0
+
+
+def PrintGpsStatus():
+    gpsStatus = GetGpsStatus()
+    msg = f"GPS: {gpsStatus}"
+    logging.info(msg)
+    PrintScrollingMessage(msg)
 
 
 # pinctrl set 5 ip pn
@@ -136,7 +150,7 @@ def StateToSting(state):
 def PrintSensors():
     global count
     count = int(w1state.value) + int(w2state.value) + int(w3state.value)
-    print('Event:  %s=%s  %s=%s  %s=%s  Count=%s'% (
+    logging.info('Event:  %s=%s  %s=%s  %s=%s  Count=%s'% (
         w1name, StateToSting(w1state), 
         w2name, StateToSting(w2state), 
         w3name, StateToSting(w3state), 
@@ -200,31 +214,31 @@ GPIO.add_event_detect(w3pin, GPIO.BOTH, SetSensor3, bouncetime=200)
 
 def pushed_up(event):
     if event.action == ACTION_PRESSED:
-        print('Joystick: %s-%s event'% (event.action, event.direction))
-        PrintReady(1)
+        logging.info('Joystick: %s-%s event'% (event.action, event.direction))
+        PrintWifiStatus()
 
 def pushed_down(event):
     global running
     if event.action == ACTION_PRESSED:
-        print('Joystick: %s-%s event'% (event.action, event.direction))
-        print('Exit')
+        logging.info('Joystick: %s-%s event'% (event.action, event.direction))
+        logging.info('Exit')
         PrintExit(1)
         sense.clear()
         running = False
 
 def pushed_left(event):
     if event.action == ACTION_PRESSED:
-        print('Joystick: %s-%s event'% (event.action, event.direction))
+        logging.info('Joystick: %s-%s event'% (event.action, event.direction))
         PrintTitle()
 
 def pushed_right(event):
     if event.action == ACTION_PRESSED:
-        print('Joystick: %s-%s event'% (event.action, event.direction))
-        PrintCreeper(1)
+        logging.info('Joystick: %s-%s event'% (event.action, event.direction))
+        PrintGpsStatus()
 
 def pushed_middle(event):
     if event.action == ACTION_PRESSED:
-        print('Joystick: %s-%s event'% (event.action, event.direction))
+        logging.info('Joystick: %s-%s event'% (event.action, event.direction))
         PrintSensors()
         PrintCount()
 
@@ -249,29 +263,27 @@ def UpdateData():
 
 def PrintData():
     global data
-    print(json.dumps(data, indent=3))
+    # logging.info(json.dumps(data, indent=3))
+    logging.info(json.dumps(data))
 
 
 def PostData():
-    startTime = time.time()
     global data
     url = "http://rhymescapes.net/fll_report_data/1"
     response = requests.post(url, data=data, timeout=5)
     if response.status_code == 200:
-        print(response.text)
+        logging.info(response.text)
     else:
-        print(f"Error: {response.status_code}")
-    endTime = time.time()
-    print(f"PostData: {endTime - startTime} s")
+        logging.error(f"Error: {response.status_code}")
 
 
-print('Ready')
-PrintReady(2)
+logging.info('Ready')
+PrintWifiStatus()
+PrintGpsStatus()
 
 
 running = True
 while running:
-    # print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
     UpdateData()
     PrintData()
     PostData()
