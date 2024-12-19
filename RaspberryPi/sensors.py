@@ -1,5 +1,6 @@
 import json
 import requests
+import subprocess
 import time
 import RPi.GPIO as GPIO
 from sense_hat import SenseHat, ACTION_PRESSED
@@ -24,6 +25,53 @@ data = {
     "GpsLongitude": -94.665196667, # GPS Longitude in decimal degrees. Available when GpsStatus >= 2. Possible Values: -180.0 to 180.0
     "GpsAltitude": 322.9           # GPS Altitude in meters. Available when GpsStatus >= 3
 }
+
+
+def PrintScrollingMessage(msg):
+    sense.clear()
+    sense.show_message(msg, scroll_speed=0.05)
+    sense.clear()
+
+
+def PrintExit(delay):
+    sense.clear()
+    o = (0, 0, 0)
+    X = (128, 0, 0)
+    ready_pixels = [
+        o, o, o, o, o, o, o, o,
+        o, o, o, o, o, o, o, o,
+        o, o, X, o, o, o, X, o,
+        o, o, o, X, o, X, o, o,
+        o, o, o, o, X, o, o, o,
+        o, o, o, X, o, X, o, o,
+        o, o, X, o, o, o, X, o,
+        o, o, o, o, o, o, o, o
+    ]
+    sense.set_pixels(ready_pixels)
+    time.sleep(delay)
+    sense.clear()
+
+
+def GetWifiStatus():
+    try:
+        output = subprocess.check_output(['iwconfig', 'wlan0'], stderr=subprocess.STDOUT)
+        output = output.decode('utf-8')
+
+        if "ESSID" in output:
+            ssid_line = [line for line in output.split('\n') if "ESSID" in line][0]
+            ssid = ssid_line.split(":")[1].strip().replace('"', '')
+            return ssid
+        else:
+            return "Not connected"
+
+    except subprocess.CalledProcessError:
+        return "Error"
+
+
+def GetGpsStatus():
+    return 0
+
+
 
 
 class State(Enum):
@@ -87,14 +135,46 @@ GPIO.add_event_detect(w2pin, GPIO.BOTH, SetSensor2, bouncetime=200)
 GPIO.add_event_detect(w3pin, GPIO.BOTH, SetSensor3, bouncetime=200)
 
 
+def pushed_up(event):
+    if event.action == ACTION_PRESSED:
+        print('Joystick: %s-%s event'% (event.action, event.direction))
+        wifiStatus = GetWifiStatus()
+        msg = f"WiFi: {wifiStatus}"
+        print(msg)
+        PrintScrollingMessage(msg)
+
 def pushed_down(event):
     global running
     if event.action == ACTION_PRESSED:
-        print('Exit (Joystick %s-%s event)'% (event.action, event.direction))
+        print('Joystick: %s-%s event'% (event.action, event.direction))
+        print('Exit')
+        PrintExit(1)
+        sense.clear()
         running = False
 
+def pushed_left(event):
+    if event.action == ACTION_PRESSED:
+        print('Joystick: %s-%s event'% (event.action, event.direction))
 
+def pushed_right(event):
+    if event.action == ACTION_PRESSED:
+        print('Joystick: %s-%s event'% (event.action, event.direction))
+        gpsStatus = GetGpsStatus()
+        msg = f"GPS: {gpsStatus}"
+        print(msg)
+        PrintScrollingMessage(msg)
+
+def pushed_middle(event):
+    if event.action == ACTION_PRESSED:
+        print('Joystick: %s-%s event'% (event.action, event.direction))
+
+
+# Detect Joystick events
+sense.stick.direction_up = pushed_up
 sense.stick.direction_down = pushed_down
+sense.stick.direction_left = pushed_left
+sense.stick.direction_right = pushed_right
+sense.stick.direction_middle = pushed_middle
 
 
 def UpdateData():
@@ -139,4 +219,4 @@ while running:
     UpdateData()
     PrintData()
     # PostData()
-    time.sleep(1)
+    time.sleep(2)
