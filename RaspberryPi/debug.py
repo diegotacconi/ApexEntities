@@ -1,4 +1,5 @@
 import json
+import logging
 import requests
 import subprocess
 import time
@@ -25,6 +26,17 @@ data = {
     "GpsLongitude": -94.665196667, # GPS Longitude in decimal degrees. Available when GpsStatus >= 2. Possible Values: -180.0 to 180.0
     "GpsAltitude": 322.9           # GPS Altitude in meters. Available when GpsStatus >= 3
 }
+
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    datefmt='%Y-%m-%d %H:%M:%S',
+    format='%(asctime)s.%(msecs)03d | %(levelname)-8s | %(message)s',
+    handlers=[
+        logging.FileHandler("/var/tmp/apex.log", mode='w'),
+        logging.StreamHandler()
+    ]
+)
 
 
 def PrintScrollingMessage(msg):
@@ -137,36 +149,36 @@ GPIO.add_event_detect(w3pin, GPIO.BOTH, SetSensor3, bouncetime=200)
 
 def pushed_up(event):
     if event.action == ACTION_PRESSED:
-        print('Joystick: %s-%s event'% (event.action, event.direction))
+        logging.info('Joystick: %s-%s event'% (event.action, event.direction))
         wifiStatus = GetWifiStatus()
         msg = f"WiFi: {wifiStatus}"
-        print(msg)
+        logging.info(msg)
         PrintScrollingMessage(msg)
 
 def pushed_down(event):
     global running
     if event.action == ACTION_PRESSED:
-        print('Joystick: %s-%s event'% (event.action, event.direction))
-        print('Exit')
+        logging.info('Joystick: %s-%s event'% (event.action, event.direction))
+        logging.info('Exit')
         PrintExit(1)
         sense.clear()
         running = False
 
 def pushed_left(event):
     if event.action == ACTION_PRESSED:
-        print('Joystick: %s-%s event'% (event.action, event.direction))
+        logging.info('Joystick: %s-%s event'% (event.action, event.direction))
 
 def pushed_right(event):
     if event.action == ACTION_PRESSED:
-        print('Joystick: %s-%s event'% (event.action, event.direction))
+        logging.info('Joystick: %s-%s event'% (event.action, event.direction))
         gpsStatus = GetGpsStatus()
         msg = f"GPS: {gpsStatus}"
-        print(msg)
+        logging.info(msg)
         PrintScrollingMessage(msg)
 
 def pushed_middle(event):
     if event.action == ACTION_PRESSED:
-        print('Joystick: %s-%s event'% (event.action, event.direction))
+        logging.info('Joystick: %s-%s event'% (event.action, event.direction))
 
 
 # Detect Joystick events
@@ -192,12 +204,13 @@ def UpdateGps():
     startTime = time.time()
     # ToDo: Add calls to GPS library
     endTime = time.time()
-    print(f"UpdateGps: {endTime - startTime} s")
+    logging.info(f"UpdateGps: {endTime - startTime} s")
 
 
 def PrintData():
     global data
-    print(json.dumps(data, indent=3))
+    # logging.info(json.dumps(data, indent=3))
+    logging.info(json.dumps(data))
 
 
 def PostData():
@@ -206,16 +219,15 @@ def PostData():
     url = "http://rhymescapes.net/fll_report_data/1"
     response = requests.post(url, data=data, timeout=5)
     if response.status_code == 200:
-        print(response.text)
+        logging.info(response.text)
     else:
-        print(f"Error: {response.status_code}")
+        logging.error(f"Error: {response.status_code}")
     endTime = time.time()
-    print(f"PostData: {endTime - startTime} s")
+    logging.info(f"PostData: {endTime - startTime} s")
 
 
 running = True
 while running:
-    # print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
     UpdateData()
     PrintData()
     # PostData()
