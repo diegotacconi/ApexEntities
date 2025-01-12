@@ -1,3 +1,5 @@
+# Debug program for Apex Entities's prototype
+
 import json
 import logging
 import requests
@@ -6,6 +8,7 @@ import time
 import RPi.GPIO as GPIO
 from sense_hat import SenseHat, ACTION_PRESSED
 from enum import Enum
+import gpsd
 
 sense = SenseHat()
 sense.clear()
@@ -22,8 +25,8 @@ data = {
     "OrientationRoll": 0,
     "OrientationYaw": 0,
     "GpsStatus": 3,                # 0=no gps, 1=no fix, 2=2D fix, 3=3D fix
-    "GpsLatitude": 38.762393333,   # GPS Latitude in decimal degrees. Available when GpsStatus >= 2. Possible Values: -90.0 to 90.0
-    "GpsLongitude": -94.665196667, # GPS Longitude in decimal degrees. Available when GpsStatus >= 2. Possible Values: -180.0 to 180.0
+    "GpsLatitude": 32.89823,       # GPS Latitude in decimal degrees. Available when GpsStatus >= 2. Possible Values: -90.0 to 90.0
+    "GpsLongitude": -97.1115,      # GPS Longitude in decimal degrees. Available when GpsStatus >= 2. Possible Values: -180.0 to 180.0
     "GpsAltitude": 322.9           # GPS Altitude in meters. Available when GpsStatus >= 3
 }
 
@@ -33,7 +36,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
     format='%(asctime)s.%(msecs)03d | %(levelname)-8s | %(message)s',
     handlers=[
-        logging.FileHandler("/var/tmp/apex.log", mode='w'),
+        #logging.FileHandler("/var/tmp/apex.log", mode='w'),
         logging.StreamHandler()
     ]
 )
@@ -41,7 +44,7 @@ logging.basicConfig(
 
 def PrintScrollingMessage(msg):
     sense.clear()
-    sense.show_message(msg, scroll_speed=0.05)
+    sense.show_message(msg, scroll_speed=0.04)
     sense.clear()
 
 
@@ -80,11 +83,24 @@ def GetWifiStatus():
         return "Error"
 
 
-def GetGpsStatus():
-    return 0
+def PrintWifiStatus():
+    wifiStatus = GetWifiStatus()
+    msg = f"WiFi: {wifiStatus}"
+    logging.info(msg)
+    PrintScrollingMessage(msg)
 
 
+def PrintGpsStatus():
+    gpsStatus = UpdateGpsData()
+    msg = f"GPS: {gpsStatus}"
+    logging.info(msg)
+    PrintScrollingMessage(msg)
 
+
+# pinctrl set 5 ip pn
+# pinctrl set 6 ip pn
+# pinctrl set 12 ip pn
+# pinctrl -p
 
 class State(Enum):
     Water = True
@@ -105,6 +121,36 @@ w3name = "3"
 w3pin = 32
 w3state = State.Water
 
+# Count number of sensors underwater
+count = 0
+
+
+def StateToSting(state):
+    str = ""
+    if state == State.Water:
+        str = "Water"
+    else:
+        str = "Air  "
+    return str
+
+
+def PrintSensors():
+    global count
+    count = int(w1state.value) + int(w2state.value) + int(w3state.value)
+    logging.info('Event:  %s=%s  %s=%s  %s=%s  Count=%s'% (
+        w1name, StateToSting(w1state), 
+        w2name, StateToSting(w2state), 
+        w3name, StateToSting(w3state), 
+        count))
+
+
+def PrintCount():
+    global count
+    if count > 0:
+        sense.show_letter(str(count))
+    else:
+        sense.clear()
+
 
 def SetSensor1(channel):
     global w1state
@@ -112,6 +158,8 @@ def SetSensor1(channel):
         w1state = State.Air
     else:
         w1state = State.Water
+    PrintSensors()
+    PrintCount()
 
 
 def SetSensor2(channel):
@@ -120,6 +168,8 @@ def SetSensor2(channel):
         w2state = State.Air
     else:
         w2state = State.Water
+    PrintSensors()
+    PrintCount()
 
 
 def SetSensor3(channel):
@@ -128,6 +178,8 @@ def SetSensor3(channel):
         w3state = State.Air
     else:
         w3state = State.Water
+    PrintSensors()
+    PrintCount()
 
 
 # Setup GPIO pins
@@ -150,10 +202,7 @@ GPIO.add_event_detect(w3pin, GPIO.BOTH, SetSensor3, bouncetime=200)
 def pushed_up(event):
     if event.action == ACTION_PRESSED:
         logging.info('Joystick: %s-%s event'% (event.action, event.direction))
-        wifiStatus = GetWifiStatus()
-        msg = f"WiFi: {wifiStatus}"
-        logging.info(msg)
-        PrintScrollingMessage(msg)
+        PrintWifiStatus()
 
 def pushed_down(event):
     global running
@@ -167,18 +216,18 @@ def pushed_down(event):
 def pushed_left(event):
     if event.action == ACTION_PRESSED:
         logging.info('Joystick: %s-%s event'% (event.action, event.direction))
+        PrintServerStatus()
 
 def pushed_right(event):
     if event.action == ACTION_PRESSED:
         logging.info('Joystick: %s-%s event'% (event.action, event.direction))
-        gpsStatus = GetGpsStatus()
-        msg = f"GPS: {gpsStatus}"
-        logging.info(msg)
-        PrintScrollingMessage(msg)
+        PrintGpsStatus()
 
 def pushed_middle(event):
     if event.action == ACTION_PRESSED:
         logging.info('Joystick: %s-%s event'% (event.action, event.direction))
+        PrintSensors()
+        PrintCount()
 
 
 # Detect Joystick events
@@ -189,7 +238,7 @@ sense.stick.direction_right = pushed_right
 sense.stick.direction_middle = pushed_middle
 
 
-def UpdateData():
+def UpdateSensorData():
     global data
     data['WaterSensor1'] = w1state.value
     data['WaterSensor2'] = w2state.value
@@ -199,12 +248,27 @@ def UpdateData():
     data['Pressure'] = round(sense.get_pressure(), 2)
 
 
-def UpdateGps():
+def UpdateGpsData():
     global data
-    startTime = time.time()
-    # ToDo: Add calls to GPS library
-    endTime = time.time()
-    logging.info(f"UpdateGps: {endTime - startTime} s")
+    try:
+        # Connect to the local gpsd
+        gpsd.connect()
+
+        # Get gps position
+        gpsPacket = gpsd.get_current()
+
+        data['GpsStatus'] = gpsPacket.mode
+
+        if gpsPacket.mode >= 2:
+            data['GpsLatitude'] = gpsPacket.lat
+            data['GpsLongitude'] = gpsPacket.lon
+
+        if gpsPacket.mode >= 3:
+            data['GpsAltitude'] = gpsPacket.alt
+
+        return gpsPacket.mode
+    except:
+        return 0
 
 
 def PrintData():
@@ -214,21 +278,35 @@ def PrintData():
 
 
 def PostData():
-    startTime = time.time()
-    global data
-    url = "http://rhymescapes.net/fll_report_data/1"
-    response = requests.post(url, data=data, timeout=5)
-    if response.status_code == 200:
-        logging.info(response.text)
-    else:
-        logging.error(f"Error: {response.status_code}")
-    endTime = time.time()
-    logging.info(f"PostData: {endTime - startTime} s")
+    try:
+        global data
+        url = "http://rhymescapes.net/fll_report_data/1"
+        response = requests.post(url, data=data, timeout=5)
+        if response.status_code == 200:
+            logging.info(response.text)
+        else:
+            logging.error(f"Error: {response.status_code}")
+        return response.status_code
+    except:
+        return -1
+
+
+def PrintServerStatus():
+    statusCode = PostData()
+    msg = f"Server: {statusCode}"
+    logging.info(msg)
+    PrintScrollingMessage(msg)
+
+
+logging.info('Ready')
+PrintWifiStatus()
+PrintGpsStatus()
 
 
 running = True
 while running:
-    UpdateData()
+    UpdateSensorData()
+    UpdateGpsData()
     PrintData()
     # PostData()
     time.sleep(2)
