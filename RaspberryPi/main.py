@@ -8,6 +8,7 @@ import time
 import RPi.GPIO as GPIO
 from sense_hat import SenseHat, ACTION_PRESSED
 from enum import Enum
+import gpsd
 
 sense = SenseHat()
 sense.clear()
@@ -43,7 +44,7 @@ logging.basicConfig(
 
 def PrintScrollingMessage(msg):
     sense.clear()
-    sense.show_message(msg, scroll_speed=0.03)
+    sense.show_message(msg, scroll_speed=0.04)
     sense.clear()
 
 
@@ -89,12 +90,8 @@ def PrintWifiStatus():
     PrintScrollingMessage(msg)
 
 
-def GetGpsStatus():
-    return 0
-
-
 def PrintGpsStatus():
-    gpsStatus = GetGpsStatus()
+    gpsStatus = UpdateGpsData()
     msg = f"GPS: {gpsStatus}"
     logging.info(msg)
     PrintScrollingMessage(msg)
@@ -241,7 +238,7 @@ sense.stick.direction_right = pushed_right
 sense.stick.direction_middle = pushed_middle
 
 
-def UpdateData():
+def UpdateSensorData():
     global data
     data['WaterSensor1'] = w1state.value
     data['WaterSensor2'] = w2state.value
@@ -249,6 +246,29 @@ def UpdateData():
     data['Temperature'] = round(sense.get_temperature(), 2)
     data['Humidity'] = round(sense.get_humidity(), 2)
     data['Pressure'] = round(sense.get_pressure(), 2)
+
+
+def UpdateGpsData():
+    global data
+    try:
+        # Connect to the local gpsd
+        gpsd.connect()
+
+        # Get gps position
+        gpsPacket = gpsd.get_current()
+
+        data['GpsStatus'] = gpsPacket.mode
+
+        if gpsPacket.mode >= 2:
+            data['GpsLatitude'] = gpsPacket.lat
+            data['GpsLongitude'] = gpsPacket.lon
+
+        if gpsPacket.mode >= 3:
+            data['GpsAltitude'] = gpsPacket.alt
+
+        return gpsPacket.mode
+    except:
+        return 0
 
 
 def PrintData():
@@ -285,7 +305,8 @@ PrintGpsStatus()
 
 running = True
 while running:
-    UpdateData()
+    UpdateSensorData()
+    UpdateGpsData()
     PrintData()
     PostData()
     time.sleep(2)
